@@ -3,6 +3,7 @@ package ua.nure.makieiev.lab1.algorithm;
 import ua.nure.makieiev.lab1.common.converter.SymbolConverter;
 import ua.nure.makieiev.lab1.common.storage.ValueStorage;
 
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 import static ua.nure.makieiev.lab1.common.constants.DesConstants.EMPTY;
@@ -22,15 +23,26 @@ import static ua.nure.makieiev.lab1.common.constants.DesConstants.ZERO_BIT;
 public class Des {
 
     public int[] encrypt(int[] textBits, int[] keysBits) {
+        System.out.println("Encrypt : ");
+        int[][] roundArrays = new int[17][TOTAL_ARRAY_SIZE];
+        roundArrays[0] = textBits;
         int[][] keys = prepareKeys(keysBits);
         textBits = permute(ValueStorage.IP, textBits);
         for (int i = ZERO; i < SIXTEEN_LOOPS; i++) {
             textBits = round(textBits, keys[i], i);
+            roundArrays[i + 1] = textBits;
+        }
+        Entropy entropy = new Entropy(roundArrays);
+        double[][] entropyResults = entropy.getEntropyResults();
+        System.out.println("Entropy : ");
+        for (double[] entropyResult : entropyResults) {
+            System.out.println(Arrays.toString(entropyResult));
         }
         return permute(ValueStorage.FP, textBits);
     }
 
     public int[] decrypt(int[] textBits, int[] keysBits) {
+        System.out.println("Decrypt : ");
         int[][] keys = prepareKeys(keysBits);
         textBits = permute(ValueStorage.IP, textBits);
         for (int i = 15; i >= ZERO; i--) {
@@ -63,7 +75,6 @@ public class Des {
     private int[] getNewKey(int[] key) {
         int[] newKey = new int[KEY_LENGTH_AFTER_CHANGE];
         IntStream.range(ZERO, newKey.length)
-                .parallel()
                 .forEach(j -> newKey[j] = key[ValueStorage.PC2[j] - ONE]);
         return newKey;
     }
@@ -88,26 +99,25 @@ public class Des {
 
     private int[] sBlock(int[] bits) {
         int[] result = new int[HALF_PART_ARRAY];
-        IntStream.range(ZERO, 8).forEach(i -> {
-            int[] row = obtainRow(bits, i);
-            String sRow = sumRow(row);
-            int[] column = obtainColumn(bits, i);
-            String sColumn = sumColumn(column);
-            int iRow = Integer.parseInt(sRow, RADIX_TWO);
-            int iColumn = Integer.parseInt(sColumn, RADIX_TWO);
-            int x = ValueStorage.S_Box[i][(iRow * 16) + iColumn];
-            StringBuilder stringBuilder = insertBinaryStringBuilder(x);
-            IntStream.range(ZERO, FOUR_BIT)
-                    .parallel()
-                    .forEach(j -> result[(i * FOUR_BIT) + j] = Integer.parseInt(stringBuilder.charAt(j) + EMPTY));
-        });
+        IntStream.range(ZERO, 8)
+                .forEach(i -> {
+                    int[] row = obtainRow(bits, i);
+                    String sRow = sumRow(row);
+                    int[] column = obtainColumn(bits, i);
+                    String sColumn = sumColumn(column);
+                    int iRow = Integer.parseInt(sRow, RADIX_TWO);
+                    int iColumn = Integer.parseInt(sColumn, RADIX_TWO);
+                    int x = ValueStorage.S_Box[i][(iRow * 16) + iColumn];
+                    StringBuilder stringBuilder = insertBinaryStringBuilder(x);
+                    IntStream.range(ZERO, FOUR_BIT)
+                            .forEach(j -> result[(i * FOUR_BIT) + j] = Integer.parseInt(stringBuilder.charAt(j) + EMPTY));
+                });
         return getFinalResult(result);
     }
 
     private int[] permute(int[] sequence, int[] dataArray) {
         int[] result = new int[sequence.length];
         IntStream.range(ZERO, sequence.length)
-                .parallel()
                 .forEach(i -> result[i] = dataArray[sequence[i] - ONE]);
         return result;
     }
@@ -115,7 +125,6 @@ public class Des {
     private int[] getFinalResult(int[] output) {
         int[] finalResult = new int[HALF_PART_ARRAY];
         IntStream.range(ZERO, HALF_PART_ARRAY)
-                .parallel()
                 .forEach(i -> finalResult[i] = output[ValueStorage.P[i] - ONE]);
         return finalResult;
     }
@@ -144,7 +153,6 @@ public class Des {
     private int[] obtainColumn(int[] bits, int index) {
         int[] column = new int[FOUR_BIT];
         IntStream.range(ZERO, column.length)
-                .parallel()
                 .forEach(j -> column[j] = bits[(6 * index) + (j + ONE)]);
         return column;
     }
@@ -160,18 +168,18 @@ public class Des {
     private int[] shiftLeft(int[] bits, int rotationNumber) {
         int[] result = new int[bits.length];
         System.arraycopy(bits, ZERO, result, ZERO, bits.length);
-        IntStream.range(ZERO, rotationNumber).forEach(i -> {
-            int temp = result[ZERO];
-            System.arraycopy(result, ONE, result, ZERO, bits.length - ONE);
-            result[bits.length - ONE] = temp;
-        });
+        IntStream.range(ZERO, rotationNumber)
+                .forEach(i -> {
+                    int temp = result[ZERO];
+                    System.arraycopy(result, ONE, result, ZERO, bits.length - ONE);
+                    result[bits.length - ONE] = temp;
+                });
         return result;
     }
 
     private int[] xor(int[] firstNumber, int[] secondNumber) {
         int[] result = new int[firstNumber.length];
         IntStream.range(ZERO, firstNumber.length)
-                .parallel()
                 .forEach(i -> result[i] = firstNumber[i] ^ secondNumber[i]);
         return result;
     }
