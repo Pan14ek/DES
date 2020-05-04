@@ -37,4 +37,10 @@ public class SymbolConverter {
         return stringBuilder.toString().trim();
     }
 
+    public static String convertBinaryToText(String binaries) {
+        StringBuilder sb = new StringBuilder();
+        Arrays.stream(binaries.split("(?<=\\G.{8})")).forEach(s -> sb.append((char) Integer.parseInt(s, 2)));
+        return sb.toString();
+    }
+
 }

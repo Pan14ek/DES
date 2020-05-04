@@ -9,14 +9,14 @@ public class DesTest {
     @Test
     public void shouldGetPositiveResult() {
         Des des = new Des();
-        int[] totalArrayBites = SymbolConverter.getBinaryArray("Hello wo");
+        String expected = "Hello wo";
+        int[] totalArrayBites = SymbolConverter.getBinaryArray(expected);
         int[] keyBites = SymbolConverter.getBinaryArray("AAAAAAAA");
-        String expected = SymbolConverter.mergeBits(totalArrayBites);
 
         int[] encryptBits = des.encrypt(totalArrayBites, keyBites);
         int[] decryptBits = des.decrypt(encryptBits, keyBites);
 
-        String actual = SymbolConverter.mergeBits(decryptBits);
+        String actual = SymbolConverter.convertBinaryToText(SymbolConverter.mergeBits(decryptBits));
 
         Assert.assertEquals(expected, actual);
     }
